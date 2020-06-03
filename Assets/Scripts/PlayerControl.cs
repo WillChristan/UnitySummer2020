@@ -16,6 +16,7 @@ public class PlayerControl : MonoBehaviour
     Vector3 rightVector;
     Vector3 gravityVec;
 
+    float lastAngle = 0.0f;
     float speed;
     float castTime;
     float castTimeElapsed;
@@ -50,7 +51,7 @@ public class PlayerControl : MonoBehaviour
     }
 
     // Update is called once per frame
-    void Update()
+    void FixedUpdate()
     {
         ValueUpdate();
         
@@ -61,7 +62,7 @@ public class PlayerControl : MonoBehaviour
             Movement();
             Animation();
         }
-
+        
     }
 
     void ValueUpdate()
@@ -150,13 +151,18 @@ public class PlayerControl : MonoBehaviour
                 angle += -inputH * 90.0f * (0.5f * inputV + 1.0f);
                 body.transform.rotation = Quaternion.Euler(0.0f, angle, 0.0f);
             }
+
+            lastAngle = angle;
         }
-        
+        else
+        {
+            body.transform.rotation = Quaternion.Euler(0.0f, lastAngle, 0.0f);
+        }
     }
 
     void CastSpell()
     {
-        if (Input.GetButtonDown("Fire1") && !isCastingSpell)
+        if (Input.GetButton("Fire1") && !isCastingSpell)
         {
             rb.velocity = Vector3.zero;
             ani.SetBool("isMoving", false);
