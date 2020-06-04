@@ -8,7 +8,7 @@ ModelImporter:
     second: Standing 1H Cast Hold
   - first:
       74: 2712526671277328822
-    second: Standing 1H Cast Hold 02
+    second: Standing 1H Cast Hold
   externalObjects: {}
   materials:
     materialImportMode: 1
@@ -38,11 +38,11 @@ ModelImporter:
     extraUserProperties: []
     clipAnimations:
     - serializedVersion: 16
-      name: Standing 1H Cast Hold 02
+      name: Standing 1H Cast Hold
       takeName: mixamo.com
       internalID: 0
       firstFrame: 1
-      lastFrame: 1
+      lastFrame: 2
       wrapMode: 0
       orientationOffsetY: 0
       level: 0

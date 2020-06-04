@@ -25,7 +25,7 @@ public class VanishObjectControl : MonoBehaviour
 
     private void OnCollisionEnter(Collision col)
     {
-        if (col.gameObject.tag == "Player")
+        if (col.gameObject.tag == "Projectile")
         {
             StartCoroutine(ShiftVisibility());
         }
@@ -37,13 +37,9 @@ public class VanishObjectControl : MonoBehaviour
         {
             if (visibility >= 1.0f) break;
 
-            Debug.Log("Running");
-
             visibility += 0.05f;
             Mat.SetFloat("Vector1_4E689299", visibility);
             yield return new WaitForSeconds(0.05f);
         }
-        Debug.Log("END");
-        yield return null;
     }
 }

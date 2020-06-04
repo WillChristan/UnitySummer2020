@@ -5,8 +5,6 @@ using UnityEngine;
 public class PlayerControl : MonoBehaviour
 {
     Rigidbody rb;
-    CapsuleCollider capCol;
-    BoxCollider boxCol;
     Animator ani;
     GameObject body;
     
@@ -15,6 +13,7 @@ public class PlayerControl : MonoBehaviour
     Vector3 forwardVector;
     Vector3 rightVector;
     Vector3 gravityVec;
+    Vector3 projectileForce;
 
     float lastAngle = 0.0f;
     float speed;
@@ -23,20 +22,21 @@ public class PlayerControl : MonoBehaviour
 
     bool isGrounded;
     bool isCastingSpell;
+    bool isCastHold;
+    bool stopMoving;
 
     public float maxSpeed;
     public float gravity;
 
     public Transform camera;
     public Transform camArm;
-    public GameObject groundPoint;
+    public GameObject castSpawn;
+    public GameObject projectilePrefab;
 
     // Start is called before the first frame update
     void Start()
     {
         rb = GetComponent<Rigidbody>();
-        capCol = GetComponent<CapsuleCollider>();
-        boxCol = GetComponent<BoxCollider>();
         ani = GetComponent<Animator>();
         body = this.gameObject;
 
@@ -46,23 +46,32 @@ public class PlayerControl : MonoBehaviour
         gravity = -9.81f;
         gravityVec = Vector3.zero;
 
-        castTime = 0.6f;
+        castTime = 0.2f;
         castTimeElapsed = 0.0f;
+
+        castSpawn.SetActive(false);
+
+        isCastHold = false;
     }
 
     // Update is called once per frame
-    void FixedUpdate()
+    void Update()
     {
         ValueUpdate();
         
         CastSpell();
 
-        if (!isCastingSpell)
+        if (!stopMoving)
         {
             Movement();
-            Animation();
+            MoveAnimation();
         }
-        
+
+        if (isCastingSpell)
+        {
+            SpellAction();
+        }
+
     }
 
     void ValueUpdate()
@@ -111,7 +120,7 @@ public class PlayerControl : MonoBehaviour
         rb.velocity = ((forwardVec + rightVec).normalized * speed) + gravityVec;
     }
 
-    void Animation()
+    void MoveAnimation()
     {
         if (Vector3.Magnitude(rb.velocity) > 0.0f)
         {
@@ -162,30 +171,69 @@ public class PlayerControl : MonoBehaviour
 
     void CastSpell()
     {
-        if (Input.GetButton("Fire1") && !isCastingSpell)
+        if (Input.GetButtonDown("Fire1"))
         {
-            rb.velocity = Vector3.zero;
-            ani.SetBool("isMoving", false);
-
-            isCastingSpell = true;
-            ani.SetBool("Spell01", isCastingSpell);
-
-            castTimeElapsed = castTime;
+            isCastHold = true;
+            StartCoroutine(CastHoldCoroutine());
         }
-        else
+
+        else if (Input.GetButtonUp("Fire1"))
         {
-            if (castTimeElapsed <= 0.0f)
+            isCastHold = false;
+
+            if (!isCastingSpell)
             {
-                isCastingSpell = false;
-                ani.SetBool("Spell01", isCastingSpell);
-
-                castTimeElapsed = 0.0f;
-
                 return;
             }
 
-            castTimeElapsed -= Time.deltaTime;
+            isCastingSpell = false;
+            ani.SetBool("Spell01", isCastingSpell);
+
+            StartCoroutine(PauseMoveCoroutine(0.8f));
+
+
+            castSpawn.SetActive(false);
+
+            isCastHold = false;
+            castTimeElapsed = 0.0f;
         }
+    }
+
+    void SpellAction()
+    {
+        Vector3 angle = camArm.transform.rotation.eulerAngles;
+
+       
+        //mult = Mathf.Clamp(angle.x - 45.0f + mult);
+        float angleHeight;
+
+        if (angle.x > 180.0f)
+        {
+            angleHeight = angle.x - 360.0f;
+        }
+        else
+        {
+            angleHeight = angle.x;
+        }
+
+        float mult = 0.2f * angleHeight;
+        mult *= mult;
+        mult -= 45.0f;
+        Debug.Log(angleHeight);
+
+        body.transform.rotation = Quaternion.Euler(0.0f, angle.y + 45.0f, 0.0f);
+
+        castSpawn.transform.rotation = Quaternion.Euler(angleHeight + mult, angle.y, 0.0f);
+
+        projectileForce = castSpawn.transform.forward;
+    }
+
+    void FireProjectile()
+    {
+        if (projectilePrefab == null) return;
+
+        GameObject bullet = Instantiate(projectilePrefab, castSpawn.transform.position, Quaternion.identity);
+        bullet.GetComponent<Rigidbody>().velocity = projectileForce * 10.0f;
     }
 
     private void OnTriggerEnter(Collider other)
@@ -202,6 +250,65 @@ public class PlayerControl : MonoBehaviour
         {
             isGrounded = false;
         }
+    }
+
+    private void OnCollisionEnter(Collision col)
+    {
+        rb.constraints = RigidbodyConstraints.FreezeRotationY;
+       
+    }
+
+    IEnumerator PauseMoveCoroutine(float pauseTime)
+    {
+        float timeElapsed = 0.0f;
+        float timeInc = 0.1f;
+
+        while (true)
+        {
+            if (timeElapsed >= pauseTime)
+            {
+                stopMoving = false;
+                break;
+            }
+
+            if (timeElapsed == pauseTime / 2.0f)
+            {
+                FireProjectile();
+            }
+
+            timeElapsed += timeInc;
+            yield return new WaitForSeconds(timeInc);
+        }
+    }
+
+    IEnumerator CastHoldCoroutine()
+    {
+        float timeInc = 0.1f;
+
+        while (isCastHold)
+        {
+            if (castTimeElapsed < castTime)
+            {
+                castTimeElapsed += timeInc;
+                yield return new WaitForSeconds(timeInc);
+            }
+            else
+            {
+                isCastingSpell = true;
+
+                ani.SetBool("Spell01", isCastingSpell);
+
+                rb.velocity = Vector3.zero;
+                ani.SetBool("isMoving", false);
+
+                stopMoving = true;
+
+                castSpawn.SetActive(true);
+                break;
+            }
+        }
+
+        castTimeElapsed = 0.0f;
     }
 
 }

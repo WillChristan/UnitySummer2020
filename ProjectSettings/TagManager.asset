@@ -6,6 +6,7 @@ TagManager:
   tags:
   - Ground
   - KillZone
+  - Projectile
   layers:
   - Default
   - TransparentFX
