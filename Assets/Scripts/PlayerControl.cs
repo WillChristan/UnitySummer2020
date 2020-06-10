@@ -10,9 +10,10 @@ public class PlayerControl : MonoBehaviour
     
     float inputH;
     float inputV;
+    float jumpVal;
+    float gravityVal;
     Vector3 forwardVector;
     Vector3 rightVector;
-    Vector3 gravityVec;
     Vector3 projectileForce;
 
     float lastAngle = 0.0f;
@@ -21,11 +22,14 @@ public class PlayerControl : MonoBehaviour
     float castTimeElapsed;
 
     bool isGrounded;
+    bool isJumping;
+    bool isFalling;
     bool isCastingSpell;
     bool isCastHold;
     bool stopMoving;
 
     public float maxSpeed;
+    public float jumpForce;
     public float gravity;
 
     public Transform camera;
@@ -43,8 +47,11 @@ public class PlayerControl : MonoBehaviour
         maxSpeed = 2.0f;
         speed = maxSpeed;
 
+        if (jumpForce <= 0.0f) jumpForce = 800.0f;
+        jumpVal = 0.0f;
+
         gravity = -9.81f;
-        gravityVec = Vector3.zero;
+        gravityVal = 0.0f;
 
         castTime = 0.2f;
         castTimeElapsed = 0.0f;
@@ -52,13 +59,15 @@ public class PlayerControl : MonoBehaviour
         castSpawn.SetActive(false);
 
         isCastHold = false;
+        isJumping = false;
+        isFalling = false;
     }
 
     // Update is called once per frame
     void Update()
     {
         ValueUpdate();
-        
+
         CastSpell();
 
         if (!stopMoving)
@@ -80,12 +89,30 @@ public class PlayerControl : MonoBehaviour
         inputV = Input.GetAxis("Vertical");
         forwardVector = camera.forward;
         rightVector = camera.right;
+
+        if (isJumping)
+        {
+            if (rb.velocity.y < 0.0f && !isFalling)
+            {
+                isFalling = true;
+                ani.SetBool("isFalling", true);
+            }
+
+            if (isFalling && isGrounded)
+            {
+                isFalling = false;
+                isJumping = false;
+
+                ani.SetBool("isFalling", false);
+                ani.SetBool("isJumping", false);
+            }
+        }
     }
-    
+
     void Movement()
     {
-        Vector3 forwardVec = new Vector3(forwardVector.x, 0.0f, forwardVector.z);
-        Vector3 rightVec = new Vector3(rightVector.x, 0.0f, rightVector.z);
+        Vector2 forwardVec = new Vector2(forwardVector.x, forwardVector.z);
+        Vector2 rightVec = new Vector2(rightVector.x, rightVector.z);
 
         //Vertical
         if(inputV != 0.0f)
@@ -94,7 +121,7 @@ public class PlayerControl : MonoBehaviour
         }
         else
         {
-            forwardVec = Vector3.zero;
+            forwardVec = Vector2.zero;
         }
 
         //Horizontal
@@ -104,47 +131,35 @@ public class PlayerControl : MonoBehaviour
         }
         else
         {
-            rightVec = Vector3.zero;
+            rightVec = Vector2.zero;
+        }
+
+        //Jumping
+        if (Input.GetButtonDown("Jump"))
+        {
+            jumpVal += (jumpForce / (jumpVal + 1.0f)) * Time.deltaTime;
+
+            isJumping = true;
+            ani.SetBool("isJumping", true);
         }
 
         //Custom Gravity
         if (!isGrounded)
         {
-            gravityVec = gravityVec + (Vector3.up * gravity) * Time.deltaTime;
+            gravityVal = gravityVal + gravity * Time.deltaTime;
         }
         else
         {
-            gravityVec = Vector3.zero;
+            gravityVal = 0.0f;
         }
 
-        rb.velocity = ((forwardVec + rightVec).normalized * speed) + gravityVec;
+        Vector2 moveVec = (forwardVec + rightVec).normalized * speed;
+
+        rb.velocity = new Vector3(moveVec.x, jumpVal + gravityVal, moveVec.y);
     }
 
     void MoveAnimation()
     {
-        if (Vector3.Magnitude(rb.velocity) > 0.0f)
-        {
-            ani.SetBool("isMoving", true);
-        }
-        else
-        {
-            ani.SetBool("isMoving", false);
-        }
-
-        Vector2 moveVec = new Vector2(Mathf.Abs(inputH), inputV);
-        float forwardMove = Vector2.SqrMagnitude(moveVec.normalized);
-
-        //Moving backward
-        if (inputV < 0.0f)
-        {
-            ani.SetFloat("MoveSpeed", inputV);
-        }
-        //Moving forward
-        else
-        {
-            ani.SetFloat("MoveSpeed", forwardMove);
-        }
-
         //Rotate player based on camera rotation
         if (inputH != 0.0f || inputV != 0.0f)
         {
@@ -163,10 +178,39 @@ public class PlayerControl : MonoBehaviour
 
             lastAngle = angle;
         }
+
+        //Jump condition
+        if (isJumping)
+        {
+            ani.SetFloat("MoveSpeed", 0.0f);
+            ani.SetBool("isMoving", false);
+            return;
+        }
+
+        if (rb.velocity.x != 0.0f || rb.velocity.z != 0.0f)
+        {
+            ani.SetBool("isMoving", true);
+        }
         else
         {
-            body.transform.rotation = Quaternion.Euler(0.0f, lastAngle, 0.0f);
+            ani.SetBool("isMoving", false);
         }
+
+
+        Vector2 moveVec = new Vector2(Mathf.Abs(inputH), inputV);
+        float forwardMove = Vector2.SqrMagnitude(moveVec.normalized);
+
+        //Moving backward
+        if (inputV < 0.0f)
+        {
+            ani.SetFloat("MoveSpeed", inputV);
+        }
+        //Moving forward
+        else
+        {
+            ani.SetFloat("MoveSpeed", forwardMove);
+        }
+
     }
 
     void CastSpell()
@@ -203,8 +247,6 @@ public class PlayerControl : MonoBehaviour
     {
         Vector3 angle = camArm.transform.rotation.eulerAngles;
 
-       
-        //mult = Mathf.Clamp(angle.x - 45.0f + mult);
         float angleHeight;
 
         if (angle.x > 180.0f)
@@ -219,7 +261,6 @@ public class PlayerControl : MonoBehaviour
         float mult = 0.2f * angleHeight;
         mult *= mult;
         mult -= 45.0f;
-        Debug.Log(angleHeight);
 
         body.transform.rotation = Quaternion.Euler(0.0f, angle.y + 45.0f, 0.0f);
 
@@ -238,7 +279,12 @@ public class PlayerControl : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if(other.tag == "Ground")
+
+    }
+
+    private void OnTriggerStay(Collider other)
+    {
+        if (other.tag == "Ground")
         {
             isGrounded = true;
         }
@@ -250,12 +296,27 @@ public class PlayerControl : MonoBehaviour
         {
             isGrounded = false;
         }
+
     }
 
     private void OnCollisionEnter(Collision col)
     {
-        rb.constraints = RigidbodyConstraints.FreezeRotationY;
+        if (col.GetContact(0).normal == Vector3.up)
+        {
+            isGrounded = true;
+
+            jumpVal = 0.0f;
+        }
+    }
+
+    private void OnCollisionStay(Collision col)
+    {
        
+    }
+
+    private void OnCollisionExit(Collision col)
+    {
+
     }
 
     IEnumerator PauseMoveCoroutine(float pauseTime)

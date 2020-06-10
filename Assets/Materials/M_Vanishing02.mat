@@ -20,7 +20,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: M_Vanishing
+  m_Name: M_Vanishing02
   m_Shader: {fileID: -6465566751694194690, guid: f4808db346f15a445a4cc1fdf661a468,
     type: 3}
   m_ShaderKeywords: 
@@ -34,7 +34,7 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - Texture2D_66CDDAF9:
-        m_Texture: {fileID: 2800000, guid: 6771b6dcffb7af64c9b96eae1e30411e, type: 3}
+        m_Texture: {fileID: 2800000, guid: cd38ecdd554737b41bb2a8324ea14e7d, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _BaseMap:

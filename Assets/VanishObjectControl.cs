@@ -12,7 +12,7 @@ public class VanishObjectControl : MonoBehaviour
     {
         Mat = GetComponent<MeshRenderer>().material;
 
-        visibility = -1.0f;
+        visibility = 0.0f;
 
         Mat.SetFloat("Vector1_4E689299", visibility);
     }
@@ -31,15 +31,24 @@ public class VanishObjectControl : MonoBehaviour
         }
     }
 
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.tag == "Projectile")
+        {
+            this.GetComponent<BoxCollider>().isTrigger = false;
+            StartCoroutine(ShiftVisibility());
+        }
+    }
+
     IEnumerator ShiftVisibility()
     {
         while (true)
         {
             if (visibility >= 1.0f) break;
 
-            visibility += 0.05f;
+            visibility += 0.01f;
             Mat.SetFloat("Vector1_4E689299", visibility);
-            yield return new WaitForSeconds(0.05f);
+            yield return new WaitForSeconds(0.01f);
         }
     }
 }
