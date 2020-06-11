@@ -2,20 +2,37 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Unity.Entities;
+using Unity.Jobs;
+using Unity.Transforms;
 
-public class BulletSystem : ComponentSystem
+[AlwaysSynchronizeSystem]
+public class BulletSystem : JobComponentSystem
 {
-    protected override void OnUpdate()
+    protected override void OnCreate()
     {
-        Entities.ForEach((ref BulletComponent bulletComponent) =>
-        {
-            bulletComponent.val += 1.0f * Time.DeltaTime;
-        });
+        base.OnCreate();
+
     }
 
-    void Shoot()
+    protected override void OnStartRunning()
     {
-        
+        base.OnStartRunning();
+
+    }
+
+
+    protected override JobHandle OnUpdate(JobHandle inputDeps)
+    {
+        float deltaTime = Time.DeltaTime;
+
+        Entities.ForEach((ref Translation trans, ref BulletComponent data) =>
+        {
+            data.velocity.y = 1f * deltaTime;
+            trans.Value.y -= data.velocity.y;
+
+        }).Run();
+
+        return default;
     }
 
 }

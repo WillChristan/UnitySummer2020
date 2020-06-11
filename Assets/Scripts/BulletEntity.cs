@@ -32,7 +32,6 @@ public class BulletEntity : MonoBehaviour
         {
             Entity en = enArray[i];
 
-            enManager.SetComponentData(en, new BulletComponent { val = Random.Range(10, 20) });
             enManager.SetComponentData(en, new MoverComponent { moveSpeed = Random.Range(1f, 2f) });
             enManager.SetComponentData(en, new Translation { Value = new Vector3(Random.Range(-8f, 8f), Random.Range(-5f, 5f), 0f)});
 

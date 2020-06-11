@@ -284,7 +284,7 @@ public class PlayerControl : MonoBehaviour
 
     private void OnTriggerStay(Collider other)
     {
-        if (other.tag == "Ground")
+        if (other.tag == "Ground" || other.tag == "Tile")
         {
             isGrounded = true;
         }
@@ -292,7 +292,7 @@ public class PlayerControl : MonoBehaviour
 
     private void OnTriggerExit(Collider other)
     {
-        if(other.tag == "Ground")
+        if(other.tag == "Ground" || other.tag == "Tile")
         {
             isGrounded = false;
         }

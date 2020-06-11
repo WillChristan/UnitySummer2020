@@ -7,6 +7,7 @@ TagManager:
   - Ground
   - KillZone
   - Projectile
+  - Tile
   layers:
   - Default
   - TransparentFX

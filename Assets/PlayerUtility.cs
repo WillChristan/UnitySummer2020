@@ -21,6 +21,17 @@ public class PlayerUtility : MonoBehaviour
         
     }
 
+    public void MovePlayer(Vector3 newLocation)
+    {
+        Player.transform.position = newLocation;
+    }
+
+    public void ResetPlayer()
+    {
+        CheckPoint = StartPoint;
+        MovePlayer(StartPoint.transform.position);
+    }
+
     private void OnTriggerEnter(Collider other)
     {
         if (other.tag == "KillZone")

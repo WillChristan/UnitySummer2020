@@ -14,7 +14,10 @@ public class VanishObjectControl : MonoBehaviour
 
         visibility = 0.0f;
 
+        Color colour = new Color(Random.Range(0.2f, 1.0f), Random.Range(0.2f, 1.0f), Random.Range(0.2f, 1.0f));
+
         Mat.SetFloat("Vector1_4E689299", visibility);
+        Mat.SetColor("Color_66566301", colour);
     }
 
     // Update is called once per frame
